@@ -2,7 +2,11 @@
   <div class="flex justify-center p-5">
     <p-button label="Check" severity="primary" class="align-self-center" (onClick)="getAndLoadPlaylist()" />
   </div>
-
+  @if(loading()) {
+    <div class="flex justify-center items-center h-[80vh]">
+        <p-progress-spinner ariaLabel="loading" />
+    </div>
+  } @else {
   <div class="flex justify-center p-4">
     <div class="flex flex-col items-center space-y-4">
       <iframe class="w-[43rem] h-[70vh]" [src]="trustedUrl" frameborder="0" allowfullscreen allow="autoplay"></iframe>
@@ -25,7 +29,7 @@
     </div>
   </div>
 
-  @if(videos().length > 0 && maxCount >100) {
+  } @if(videos().length > 0 && maxCount >100) {
   <div class="flex justify-center space-x-4">
     <p-button label="previous" severity="info" (onClick)="loadPreviousPage()"></p-button>
     <p-button label="next" severity="info" (onClick)="loadNextPage()"></p-button>

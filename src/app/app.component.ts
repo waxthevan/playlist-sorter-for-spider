@@ -5,6 +5,9 @@ import { lastValueFrom } from "rxjs";
 import { DomSanitizer, SafeResourceUrl } from "@angular/platform-browser";
 import { SkeletonModule } from "primeng/skeleton";
 import { AgoPipe } from "../pipes/ago.pipe";
+import { VideoItem } from "../models/playlist-item";
+import { ProgressSpinnerModule } from 'primeng/progressspinner';
+
 type Video = {
   contentDetailVideoId: string;
   snippetResourceIdVideoId: string;
@@ -17,7 +20,7 @@ type Video = {
 
 @Component({
   selector: "app-root",
-  imports: [ButtonModule, SkeletonModule, AgoPipe],
+  imports: [ButtonModule, SkeletonModule, AgoPipe, ProgressSpinnerModule],
   templateUrl: "./app.component.html",
   styleUrl: "./app.component.scss",
 })
@@ -54,6 +57,7 @@ export class AppComponent {
   }
 
   private async loadPlaylistItems(playlistId: string, pageToken: string = "") {
+    this.loading.set(true);
     this.playListId = playlistId;
     this.previousToken = pageToken;
     let playlist = await lastValueFrom(this.youtubePlaylistService.getPlaylistItems(playlistId, pageToken));
@@ -62,15 +66,7 @@ export class AppComponent {
     for (let item of playlist.items) {
       const videoDetails = await lastValueFrom(this.youtubePlaylistService.getVideoDetails(item.contentDetails.videoId));
       const videoCount = videoDetails.items[0]?.statistics?.viewCount || "0";
-      videos.push({
-        contentDetailVideoId: item.contentDetails.videoId,
-        snippetResourceIdVideoId: item.snippet.resourceId.videoId,
-        thumbnailUrl: item.snippet.thumbnails.default.url,
-        url: "https://www.youtube.com/embed/" + item.snippet.resourceId.videoId + "?autoplay=1",
-        title: item.snippet.title,
-        viewCount: parseInt(videoCount, 10),
-        publishedAt: item.contentDetails.videoPublishedAt,
-      });
+      videos.push(this.mapToVideo(item, videoCount));
     }
 
     videos = videos.sort((a, b) => a.viewCount - b.viewCount);
@@ -79,6 +75,19 @@ export class AppComponent {
     this.selectedVideoUrl = "https://www.youtube.com/embed/" + playlist.items[0].snippet.resourceId.videoId;
     this.trustedUrl = this.sanitizer.bypassSecurityTrustResourceUrl(this.selectedVideoUrl);
     this.videos.set(videos);
+    this.loading.set(false);
+  }
+
+  private mapToVideo(item: VideoItem, videoCount: string): Video {
+    return {
+      contentDetailVideoId: item.contentDetails.videoId,
+      snippetResourceIdVideoId: item.snippet.resourceId.videoId,
+      thumbnailUrl: item.snippet.thumbnails.standard?.url || item.snippet.thumbnails.high?.url || item.snippet.thumbnails.medium?.url || item.snippet.thumbnails.default?.url || "",
+      url: "https://www.youtube.com/embed/" + item.snippet.resourceId.videoId + "?autoplay=1",
+      title: item.snippet.title,
+      viewCount: parseInt(videoCount, 10),
+      publishedAt: item.contentDetails.videoPublishedAt,
+    };
   }
 
   public loadNextPage() {
