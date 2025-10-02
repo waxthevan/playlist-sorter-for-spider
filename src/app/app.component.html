@@ -5,23 +5,27 @@
 
   <div class="flex justify-center p-4">
     <div class="flex flex-col items-center space-y-4">
-      <iframe class="w-[43rem] h-[70vh]" [src]="trustedUrl" frameborder="0" allowfullscreen  allow="autoplay"></iframe>
+      <iframe class="w-[43rem] h-[70vh]" [src]="trustedUrl" frameborder="0" allowfullscreen allow="autoplay"></iframe>
     </div>
     <div class="flex flex-col w-1/2 items-start h-[70vh] overflow-y-auto">
       @for(video of videos(); track video) {
-      <div (click)="playVideoAndCopyVideo(video)" class="p-2 bg-white rounded shadow flex flex-row items-center m-2 w-[33rem] cursor-pointer hover:shadow-lg hover:bg-gray-100" style="width: -webkit-fill-available">
-        <img [src]="video.snippet.thumbnails.default.url" alt="{{ video.snippet.title }}" class="mt-2 w-[9rem] h-[6-rem]" />
-        <h3 class="text-sm font-semibold ml-2 w-3/4">{{ video.snippet.title }}</h3>
+      <div
+        (click)="playVideoAndCopyVideo(video)"
+        class="p-2 bg-white rounded shadow flex flex-row items-center m-2 w-[33rem] cursor-pointer hover:shadow-lg hover:bg-gray-100"
+        style="width: -webkit-fill-available"
+      >
+        <img [src]="video.thumbnailUrl" alt="{{ video.title }}" class="mt-2 w-[9rem] h-[6-rem]" />
+        <h1 class="font-semibold ml-2 w-3/4 text-black text-lg">{{ video.title }}</h1>
         <span class="flex flex-row items-center ml-auto">
-          <p class="text-xs text-gray-500 mr-2">{{ video.contentDetails.videoId | viewCount | async }} views</p>
-          <p class="text-xs text-gray-500">{{ video.contentDetails.videoPublishedAt | ago }}</p>
+          <p class="text-xs text-gray-500 mr-2">{{ video.viewCount }} views</p>
+          <p class="text-xs text-gray-500">{{ video.publishedAt | ago }}</p>
         </span>
       </div>
       }
     </div>
   </div>
 
-  @if(videos().length > 0) {
+  @if(videos().length > 0 && maxCount >100) {
   <div class="flex justify-center space-x-4">
     <p-button label="previous" severity="info" (onClick)="loadPreviousPage()"></p-button>
     <p-button label="next" severity="info" (onClick)="loadNextPage()"></p-button>

@@ -1,16 +1,23 @@
 import { Component, inject, signal, WritableSignal } from "@angular/core";
 import { ButtonModule } from "primeng/button";
 import { YoutubePlaylistService } from "../services/youtube-playlist.service";
-import { VideoItem } from "../models/playlist-item";
 import { lastValueFrom } from "rxjs";
 import { DomSanitizer, SafeResourceUrl } from "@angular/platform-browser";
 import { SkeletonModule } from "primeng/skeleton";
 import { AgoPipe } from "../pipes/ago.pipe";
-import { ViewCountPipe } from "../pipes/view-count.pipe";
-import { AsyncPipe } from "@angular/common";
+type Video = {
+  contentDetailVideoId: string;
+  snippetResourceIdVideoId: string;
+  thumbnailUrl: string;
+  url: string;
+  title: string;
+  viewCount: number;
+  publishedAt: string;
+};
+
 @Component({
   selector: "app-root",
-  imports: [ButtonModule, SkeletonModule, AgoPipe, ViewCountPipe, AsyncPipe],
+  imports: [ButtonModule, SkeletonModule, AgoPipe],
   templateUrl: "./app.component.html",
   styleUrl: "./app.component.scss",
 })
@@ -20,17 +27,20 @@ export class AppComponent {
   private selectedVideoUrl: string | null = null;
   public trustedUrl: SafeResourceUrl | null = null;
   public loading: WritableSignal<boolean> = signal(false);
-  public videos = signal<Array<VideoItem>>([]);
+  public videos = signal<Array<Video>>([]);
   nextPageToken: any;
   playListId: string = "";
   previousToken: any;
   previousPageToken: any;
+  maxCount: number = 0;
 
   public async getAndLoadPlaylist() {
     navigator.clipboard
       .readText()
       .then(async (text) => {
-        const playlistId = text.split("list=")[1];
+        const regex = /[?&]list=([a-zA-Z0-9_-]+)/;
+        const match = text.match(regex);
+        const playlistId = match ? match[1] : null;
         if (!playlistId) {
           console.error("No playlist ID found in the URL");
           return;
@@ -46,11 +56,29 @@ export class AppComponent {
   private async loadPlaylistItems(playlistId: string, pageToken: string = "") {
     this.playListId = playlistId;
     this.previousToken = pageToken;
-    const playlist = await lastValueFrom(this.youtubePlaylistService.getPlaylistItems(playlistId, pageToken));
+    let playlist = await lastValueFrom(this.youtubePlaylistService.getPlaylistItems(playlistId, pageToken));
+    this.maxCount = playlist.pageInfo.totalResults;
+    let videos: Video[] = [];
+    for (let item of playlist.items) {
+      const videoDetails = await lastValueFrom(this.youtubePlaylistService.getVideoDetails(item.contentDetails.videoId));
+      const videoCount = videoDetails.items[0]?.statistics?.viewCount || "0";
+      videos.push({
+        contentDetailVideoId: item.contentDetails.videoId,
+        snippetResourceIdVideoId: item.snippet.resourceId.videoId,
+        thumbnailUrl: item.snippet.thumbnails.default.url,
+        url: "https://www.youtube.com/embed/" + item.snippet.resourceId.videoId + "?autoplay=1",
+        title: item.snippet.title,
+        viewCount: parseInt(videoCount, 10),
+        publishedAt: item.contentDetails.videoPublishedAt,
+      });
+    }
+
+    videos = videos.sort((a, b) => a.viewCount - b.viewCount);
+
     this.nextPageToken = playlist.nextPageToken;
     this.selectedVideoUrl = "https://www.youtube.com/embed/" + playlist.items[0].snippet.resourceId.videoId;
     this.trustedUrl = this.sanitizer.bypassSecurityTrustResourceUrl(this.selectedVideoUrl);
-    this.videos.set(playlist.items);
+    this.videos.set(videos);
   }
 
   public loadNextPage() {
@@ -65,9 +93,9 @@ export class AppComponent {
     }
   }
 
-  public playVideoAndCopyVideo(video : VideoItem) {
-    this.selectedVideoUrl = "https://www.youtube.com/embed/" + video.snippet.resourceId.videoId + "?autoplay=1";
+  public playVideoAndCopyVideo(video: Video) {
+    this.selectedVideoUrl = video.url;
     this.trustedUrl = this.sanitizer.bypassSecurityTrustResourceUrl(this.selectedVideoUrl);
-    navigator.clipboard.writeText(video.snippet.title);
+    navigator.clipboard.writeText(video.title);
   }
 }
