@@ -59,7 +59,6 @@ export class AppComponent {
   private async loadPlaylistItems(playlistId: string, pageToken: string = "") {
     this.loading.set(true);
     this.playListId = playlistId;
-    this.previousToken = pageToken;
     let playlist = await lastValueFrom(this.youtubePlaylistService.getPlaylistItems(playlistId, pageToken));
     this.maxCount = playlist.pageInfo.totalResults;
     let videos: Video[] = [];
@@ -71,6 +70,7 @@ export class AppComponent {
 
     videos = videos.sort((a, b) => a.viewCount - b.viewCount);
 
+    this.previousPageToken = playlist.prevPageToken;
     this.nextPageToken = playlist.nextPageToken;
     this.selectedVideoUrl = "https://www.youtube.com/embed/" + playlist.items[0].snippet.resourceId.videoId;
     this.trustedUrl = this.sanitizer.bypassSecurityTrustResourceUrl(this.selectedVideoUrl);

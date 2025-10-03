@@ -3,6 +3,7 @@ export type YouTubePlaylistItemListResponse = {
   kind: string;
   etag: string;
   nextPageToken: string;
+  prevPageToken?: string;
   items: VideoItem[];
   pageInfo: {
     totalResults: number;
