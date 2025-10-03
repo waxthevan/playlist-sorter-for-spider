@@ -3,9 +3,9 @@
     <p-button label="Check" severity="primary" class="align-self-center" (onClick)="getAndLoadPlaylist()" />
   </div>
   @if(loading()) {
-    <div class="flex justify-center items-center h-[80vh]">
-        <p-progress-spinner ariaLabel="loading" />
-    </div>
+  <div class="flex justify-center items-center h-[80vh]">
+    <p-progress-spinner ariaLabel="loading" />
+  </div>
   } @else {
   <div class="flex justify-center p-4">
     <div class="flex flex-col items-center space-y-4">
@@ -23,6 +23,7 @@
         <span class="flex flex-row items-center ml-auto">
           <p class="text-xs text-gray-500 mr-2">{{ video.viewCount }} views</p>
           <p class="text-xs text-gray-500">{{ video.publishedAt | ago }}</p>
+          <p-button class="ml-4" label="search" (onClick)="searchVideo(video.title); $event.stopPropagation()"></p-button>
         </span>
       </div>
       }

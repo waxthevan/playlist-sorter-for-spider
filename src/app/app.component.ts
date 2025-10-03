@@ -107,4 +107,10 @@ export class AppComponent {
     this.trustedUrl = this.sanitizer.bypassSecurityTrustResourceUrl(this.selectedVideoUrl);
     navigator.clipboard.writeText(video.title);
   }
+
+  public searchVideo(title: string) {
+    // open a new tab and search for the title on google
+    const url = `https://www.google.com/search?q=${encodeURIComponent(title)}`;
+    window.open(url, "_blank");
+  }
 }
